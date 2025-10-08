@@ -1,137 +1,95 @@
-import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
-import { Icon } from "leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, LayersControl, LayerGroup, useMap } from "react-leaflet";
+import L, { Map as LeafletMap } from "leaflet";
+import type { Camera } from "@/types/camera";
+import type { WeatherData } from "@/hooks/useWeather";
 import "leaflet/dist/leaflet.css";
-import type { Camera, CameraStatus } from "@/types/camera";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-
-// Marker Icon
-const cameraIcon = new Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-// Map layers
-const mapLayers = {
-  Satellite: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-  Terrain: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-  Street: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-};
-
-const layerAttribution = {
-  Satellite: "&copy; Carto &copy; OpenStreetMap contributors",
-  Terrain: "&copy; OpenTopoMap &copy; OpenStreetMap contributors",
-  Street: "&copy; OpenStreetMap contributors",
-};
+import { useRef, useEffect } from "react";
 
 interface TacticalMapProps {
-  cameras?: Camera[];
+  cameras: Camera[];
   selectedCamera?: Camera;
   onCameraSelect?: (camera: Camera) => void;
+  weather?: WeatherData;
+  showWaypoints?: boolean;
+  showCameraControls?: boolean;
 }
 
-// Auto-center helper component
-const MapAutoFocus = ({ selectedCamera }: { selectedCamera?: Camera }) => {
-  const map = useMap();
+const TacticalMap = ({
+  cameras,
+  selectedCamera,
+  onCameraSelect,
+  showWaypoints = true,
+  showCameraControls = true,
+}: TacticalMapProps) => {
+  const mapRef = useRef<LeafletMap | null>(null);
+
+  const defaultCenter: L.LatLngTuple = cameras.length
+    ? [cameras[0].location.lat, cameras[0].location.lng]
+    : [13.0735, 77.5741];
+
+  const arrowIcon = L.icon({
+    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
+
+  // Jump to selected camera when it changes
   useEffect(() => {
-    if (selectedCamera) {
-      map.flyTo([selectedCamera.location.lat, selectedCamera.location.lng], 15, { duration: 1.5 });
+    if (selectedCamera && mapRef.current) {
+      mapRef.current.flyTo(
+        [selectedCamera.location.lat, selectedCamera.location.lng],
+        mapRef.current.getZoom(),
+        { animate: true }
+      );
     }
-  }, [selectedCamera, map]);
-  return null;
-};
-
-const TacticalMap = ({ cameras = [], selectedCamera, onCameraSelect }: TacticalMapProps) => {
-  const [mapType, setMapType] = useState<keyof typeof mapLayers>("Terrain");
-  const center: [number, number] = [32.0, -110.0];
-
-  const getStatusColor = (status: CameraStatus) => {
-    switch (status) {
-      case "online":
-        return "hsl(160, 40%, 35%)";
-      case "degraded":
-        return "hsl(38, 92%, 50%)";
-      case "offline":
-        return "hsl(0, 72%, 51%)";
-      default:
-        return "hsl(210, 10%, 55%)";
-    }
-  };
+  }, [selectedCamera]);
 
   return (
-    <div className="h-full w-full relative">
-      {/* Map Type Switcher on right */}
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col space-y-2">
-        {Object.keys(mapLayers).map((type) => (
-          <button
-            key={type}
-            onClick={() => setMapType(type as keyof typeof mapLayers)}
-            className={`px-2 py-1 text-xs rounded ${
-              mapType === type ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"
-            }`}
-          >
-            {type}
-          </button>
-        ))}
-      </div>
+    <MapContainer
+      center={defaultCenter}
+      zoom={13}
+      className="h-full w-full"
+      ref={mapRef} // Use ref instead of whenCreated
+      whenReady={() => { mapRef.current = mapRef.current; }} // just to satisfy the callback
+    >
+      <LayersControl position="topright">
+        <LayersControl.BaseLayer checked name="Street Map">
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        </LayersControl.BaseLayer>
+        <LayersControl.BaseLayer name="Terrain Map">
+          <TileLayer url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" />
+        </LayersControl.BaseLayer>
+        <LayersControl.BaseLayer name="Satellite">
+          <TileLayer url="https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" subdomains={['mt0','mt1','mt2','mt3']} />
+        </LayersControl.BaseLayer>
+      </LayersControl>
 
-      <MapContainer center={center} zoom={11} className="h-full w-full" zoomControl={true}>
-        <TileLayer url={mapLayers[mapType]} attribution={layerAttribution[mapType]} />
-
-        {/* Auto-focus on latest selection */}
-        {selectedCamera && <MapAutoFocus selectedCamera={selectedCamera} />}
-
+      <LayerGroup>
         {cameras.map((camera) => (
           <Marker
             key={camera.id}
             position={[camera.location.lat, camera.location.lng]}
-            icon={cameraIcon}
+            icon={arrowIcon}
             eventHandlers={{
               click: () => onCameraSelect?.(camera),
             }}
-          >
-            <Popup>
-              <div className="p-2 min-w-[200px]">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-mono font-bold text-sm">{camera.name}</h3>
-                  <Badge
-                    variant={camera.status === "online" ? "default" : "destructive"}
-                    className="text-[10px] h-4"
-                  >
-                    {camera.status}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mb-2">Sector: {camera.sector}</p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  PTZ: {camera.ptzCapable ? "Yes" : "No"}
-                </p>
-                <Button
-                  size="sm"
-                  className="w-full text-xs h-7"
-                  onClick={() => onCameraSelect?.(camera)}
-                >
-                  View Feed
-                </Button>
-              </div>
-            </Popup>
-            <Circle
-              center={[camera.location.lat, camera.location.lng]}
-              radius={500}
-              pathOptions={{
-                color: getStatusColor(camera.status),
-                fillColor: getStatusColor(camera.status),
-                fillOpacity: 0.1,
-              }}
-            />
-          </Marker>
+          />
         ))}
-      </MapContainer>
-    </div>
+
+        {showWaypoints && cameras.length > 1 && (
+          <Polyline
+            positions={cameras.map(c => [c.location.lat, c.location.lng])}
+            color="lime"
+            weight={3}
+            dashArray="5,5"
+          />
+        )}
+      </LayerGroup>
+    </MapContainer>
   );
 };
 
