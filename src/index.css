@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Tactical dark theme - military grade surveillance UI */
+    --background: 210 20% 6%;
+    --foreground: 210 10% 92%;
+
+    --card: 210 18% 8%;
+    --card-foreground: 210 10% 92%;
+
+    --popover: 210 20% 7%;
+    --popover-foreground: 210 10% 92%;
+
+    /* Military olive/tactical primary */
+    --primary: 75 15% 35%;
+    --primary-foreground: 210 10% 98%;
+
+    /* Panel secondary */
+    --secondary: 210 15% 12%;
+    --secondary-foreground: 210 10% 92%;
+
+    --muted: 210 15% 14%;
+    --muted-foreground: 210 8% 55%;
+
+    /* Tactical teal accent */
+    --accent: 180 35% 22%;
+    --accent-foreground: 180 10% 95%;
+
+    /* Critical alert colors */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 10% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 10% 98%;
+
+    --border: 210 15% 16%;
+    --input: 210 15% 16%;
+    --ring: 75 15% 45%;
+
+    --radius: 0.25rem;
+
+    /* Tactical-specific tokens */
+    --panel-bg: 210 18% 9%;
+    --panel-border: 210 15% 14%;
+    --success: 160 40% 35%;
+    --success-foreground: 210 10% 98%;
+    
+    /* Map and overlay */
+    --map-overlay: 210 20% 8%;
+    --map-marker-active: 38 92% 50%;
+    --map-marker-inactive: 210 10% 55%;
+
+    /* Alert states */
+    --alert-critical: 0 72% 51%;
+    --alert-high: 38 92% 50%;
+    --alert-medium: 48 96% 53%;
+    --alert-low: 160 40% 35%;
+
+    /* Sidebar */
+    --sidebar-background: 210 20% 7%;
+    --sidebar-foreground: 210 10% 82%;
+    --sidebar-primary: 75 15% 35%;
+    --sidebar-primary-foreground: 210 10% 98%;
+    --sidebar-accent: 210 15% 12%;
+    --sidebar-accent-foreground: 210 10% 92%;
+    --sidebar-border: 210 15% 14%;
+    --sidebar-ring: 75 15% 45%;
+  }
+
+  .dark {
+    /* Using same tactical theme for dark mode */
+    --background: 210 20% 6%;
+    --foreground: 210 10% 92%;
+    --card: 210 18% 8%;
+    --card-foreground: 210 10% 92%;
+    --popover: 210 20% 7%;
+    --popover-foreground: 210 10% 92%;
+    --primary: 75 15% 35%;
+    --primary-foreground: 210 10% 98%;
+    --secondary: 210 15% 12%;
+    --secondary-foreground: 210 10% 92%;
+    --muted: 210 15% 14%;
+    --muted-foreground: 210 8% 55%;
+    --accent: 180 35% 22%;
+    --accent-foreground: 180 10% 95%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 10% 98%;
+    --border: 210 15% 16%;
+    --input: 210 15% 16%;
+    --ring: 75 15% 45%;
+    --sidebar-background: 210 20% 7%;
+    --sidebar-foreground: 210 10% 82%;
+    --sidebar-primary: 75 15% 35%;
+    --sidebar-primary-foreground: 210 10% 98%;
+    --sidebar-accent: 210 15% 12%;
+    --sidebar-accent-foreground: 210 10% 92%;
+    --sidebar-border: 210 15% 14%;
+    --sidebar-ring: 75 15% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Tactical UI utilities */
+  .tactical-panel {
+    @apply bg-[hsl(var(--panel-bg))] border border-[hsl(var(--panel-border))] rounded-sm;
+  }
+
+  .tactical-border {
+    @apply border border-[hsl(var(--panel-border))];
+  }
+
+  .alert-pulse {
+    animation: alert-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes alert-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  .tactical-glow {
+    box-shadow: 0 0 10px hsl(var(--map-marker-active) / 0.3);
+  }
+
+  /* Scrollbar styling */
+  .tactical-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .tactical-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--panel-bg));
+  }
+
+  .tactical-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 4px;
+  }
+
+  .tactical-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
